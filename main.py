@@ -13,7 +13,7 @@ video = cv2.VideoCapture(f"http://{ROBOT_IP}:81/stream")
 
 RES = [320, 240]
 RED = (255, 0, 0)
-REACT_DIFF = 10
+REACT_DIFF = 30
 
 #320x240
 
@@ -43,21 +43,24 @@ while True:
         valid_centers = [c for c in centers if c is not None]
 
         if valid_centers:
+            # Default to the first detected center
+            center = valid_centers[0]
+
             for c in valid_centers:
-                if c == None:
-                    break
-                if c != None and RES[0] - c[0] < RES[0] - center[0]:
+                # Find the object closest to the vertical center line (160)
+                if abs(c[0] - RES[0]//2) < abs(center[0] - RES[0]//2):
                     center = c
 
+            # Movement logic
             if abs(center[0] - RES[0]//2) > REACT_DIFF:
-                if center[0] < RES[0]//2:
-                    post("speed:150")
-                    post("left")
-                else:
-                    post("speed:150")
+                if center[0] > RES[0]//2:
+                    post("speed:110")
                     post("right")
+                else:
+                    post("speed:110")
+                    post("left")
             else:
-                post("speed:110")
+                post("speed:150")
                 post("forward")
 
     if cv2.waitKey(1) == 27:

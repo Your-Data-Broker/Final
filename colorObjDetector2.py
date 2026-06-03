@@ -7,7 +7,7 @@ class ColorObjectDetector:
     def __init__(self):
         # HSV
         self.color_ranges = {
-            "black": [(np.array([0,0,0]), np.array([30, 30, 30]))]
+            "black": [(np.array([0,0,0]), np.array([50, 50, 50]))]
         }
 
     def process_frame(self, frame, target_colors):
