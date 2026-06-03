@@ -1,3 +1,5 @@
+# The script is not used and can be removed
+
 import cv2
 import numpy as np
 
