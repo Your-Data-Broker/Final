@@ -3,17 +3,12 @@ from time import sleep
 from websocket import create_connection
 from colorObjDetector2 import ColorObjectDetector
 import threading
-
-ROBOT_IP = "10.1.66.42"
+import settings
 
 
 detector = ColorObjectDetector()
-robot = create_connection(f"ws://{ROBOT_IP}/ws", timeout=2)
-video = cv2.VideoCapture(f"http://{ROBOT_IP}:81/stream")
-
-RES = [320, 240]
-RED = (255, 0, 0)
-REACT_DIFF = 30
+robot = create_connection(f"ws://{settings.ROBOT_IP}/ws", timeout=2)
+video = cv2.VideoCapture(f"http://{settings.ROBOT_IP}:81/stream")
 
 #320x240
 
@@ -35,10 +30,10 @@ while True:
     if ok:
         processedFrame, centers = detector.process_frame(frame, target_colors=["black"])
 
-        cv2.line(processedFrame, (RES[0]//2, 0), (RES[0]//2, RES[1]), RED, 2)
+        cv2.line(processedFrame, (settings.RES[0]//2, 0), (settings.RES[0]//2, settings.RES[1]), settings.RED, LINE_THICKNESS)
         cv2.imshow("Robot camera", processedFrame)
 
-        center = [RES[0]//2,RES[1]//2]
+        center = [settings.RES[0]//2,settings.RES[1]//2]
 
         valid_centers = [c for c in centers if c is not None]
 
@@ -48,12 +43,12 @@ while True:
 
             for c in valid_centers:
                 # Find the object closest to the vertical center line (160)
-                if abs(c[0] - RES[0]//2) < abs(center[0] - RES[0]//2):
+                if abs(c[0] - settings.RES[0]//2) < abs(center[0] - settings.RES[0]//2):
                     center = c
 
             # Movement logic
-            if abs(center[0] - RES[0]//2) > REACT_DIFF:
-                if center[0] > RES[0]//2:
+            if abs(center[0] - settings.RES[0]//2) > settings.REACT_DIFF:
+                if center[0] > settings.RES[0]//2:
                     post("speed:110")
                     post("right")
                 else:

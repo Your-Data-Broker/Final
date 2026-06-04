@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import settings
 
 
 class ColorObjectDetector:
@@ -11,13 +12,16 @@ class ColorObjectDetector:
         }
 
     def process_frame(self, frame, target_colors):
+        img = frame
+
+        for i in range(settings.LINE_AMOUNT):
+            cv2.line(img, (0, settings.RES[1]//settings.LINE_AMOUNT * i), (settings.RES[0], settings.RES[1]//settings.LINE_AMOUNT * i), settings.WHITE, settings.LINE_THICKNESS)
+
+        outputImg = img.copy()
+
         img = cv2.GaussianBlur(frame, (5, 5), 0)
 
-        hsv = img
-
         centers = []
-
-        outputImg = frame.copy()
 
         for colorName in target_colors:
             if colorName not in self.color_ranges:
@@ -26,9 +30,9 @@ class ColorObjectDetector:
             mask = None
             for lower, upper in self.color_ranges[colorName]:
                 if mask is None:
-                    mask = cv2.inRange(hsv, lower, upper)
+                    mask = cv2.inRange(img, lower, upper)
                 else:
-                    mask = cv2.bitwise_or(mask, cv2.inRange(hsv, lower, upper))
+                    mask = cv2.bitwise_or(mask, cv2.inRange(img, lower, upper))
 
             contours, _ = cv2.findContours(
                 mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
@@ -51,7 +55,7 @@ class ColorObjectDetector:
 
                     centers.append([cx, cy])
 
-                    cv2.drawContours(outputImg, [contour], -1, (0, 255, 0), 2)
+                    cv2.drawContours(outputImg, [contour], -1, (0, 255, 0), settings.LINE_THICKNESS)
                     cv2.circle(outputImg, (cx, cy), 5, (146, 255, 176), -1)
 
         return outputImg, centers
