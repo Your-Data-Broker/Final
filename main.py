@@ -1,5 +1,5 @@
 import cv2
-from time import sleep
+import time
 from websocket import create_connection
 from colorObjDetector2 import ColorObjectDetector
 import threading
@@ -18,11 +18,25 @@ robot.send("speed:110")
 #robot.send("forward")
 #print(robot.recv())
 
-def stopThread():
-    block
-
 def post(post_str):
     robot.send(post_str)
+
+
+lastCommandTime = time.time_ns()
+
+def stopThreadFunc():
+    savedTime = time.time_ns()
+    lastCommandTime = savedTime
+    time.sleep(settings.KILL_TIME)
+    if lastCommandTime == savedTime:
+        post("stop")
+        exit()
+
+def startThread():
+    stopThread = threading.Thread(target=stopThreadFunc)
+    stopThread.start()
+    stopThread.join()
+
 
 while True:
     ok, frame = video.read()
