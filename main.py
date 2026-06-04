@@ -52,8 +52,11 @@ while True:
 
             for c in valid_centers:
                 # This finds the object closest to the vertical center
-                # TODO: Change this to find the center with the lowest y coordinate instead
-                if abs(c[0] - settings.RES[0]//2) < abs(center[0] - settings.RES[0]//2):
+
+                #if abs(c[0] - settings.RES[0]//2) < abs(center[0] - settings.RES[0]//2):
+                #    center = c
+
+                if c[1] < center[1]:
                     center = c
 
             if abs(center[0] - settings.RES[0]//2) > settings.REACT_DIFF:
