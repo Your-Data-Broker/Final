@@ -6,9 +6,9 @@ import settings
 class ColorObjectDetector:
 
     def __init__(self):
-        # HSV
+        # RGB
         self.color_ranges = {
-            "black": [(np.array([0,0,0]), np.array([50, 50, 50]))]
+            "black": [(np.array([0,0,0]), np.array([settings.RGB_MAX_VALUE] * 3))]
         }
 
     def process_frame(self, frame, target_colors):
@@ -41,7 +41,7 @@ class ColorObjectDetector:
             colorCount = 0
             for i in range(len(contours)):
                 contour = contours[i]
-                if cv2.contourArea(contour) < 500:
+                if cv2.contourArea(contour) < settings.MIN_MASK_AREA:
                     continue
 
                 colorCount += 1

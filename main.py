@@ -52,15 +52,13 @@ while True:
         valid_centers = [c for c in centers if c is not None]
 
         if valid_centers:
-            # Default to the first detected center
             center = valid_centers[0]
 
             for c in valid_centers:
-                # Find the object closest to the vertical center line (160)
+                # This finds the object closest to the vertical center
                 if abs(c[0] - settings.RES[0]//2) < abs(center[0] - settings.RES[0]//2):
                     center = c
 
-            # Movement logic
             if abs(center[0] - settings.RES[0]//2) > settings.REACT_DIFF:
                 if center[0] > settings.RES[0]//2:
                     post("speed:110")
