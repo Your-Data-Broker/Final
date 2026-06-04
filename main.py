@@ -12,15 +12,11 @@ video = cv2.VideoCapture(f"http://{settings.ROBOT_IP}:81/stream")
 
 #320x240
 
-robot.send("speed:110")
-#print(robot.recv())
-
-#robot.send("forward")
-#print(robot.recv())
 
 def post(post_str):
     robot.send(post_str)
 
+post(f"speed:{settings.LINEAR_SPEED}")
 
 lastCommandTime = time.time_ns()
 
@@ -56,18 +52,19 @@ while True:
 
             for c in valid_centers:
                 # This finds the object closest to the vertical center
+                # TODO: Change this to find the center with the lowest y coordinate instead
                 if abs(c[0] - settings.RES[0]//2) < abs(center[0] - settings.RES[0]//2):
                     center = c
 
             if abs(center[0] - settings.RES[0]//2) > settings.REACT_DIFF:
                 if center[0] > settings.RES[0]//2:
-                    post("speed:110")
+                    post(f"speed:{settings.TURNING_SPEED}")
                     post("right")
                 else:
-                    post("speed:110")
+                    post(f"speed:{settings.TURNING_SPEED}")
                     post("left")
             else:
-                post("speed:150")
+                post(f"speed:{settings.LINEAR_SPEED}")
                 post("forward")
 
     if cv2.waitKey(1) == 27:
