@@ -6,7 +6,7 @@ import settings
 class ColorObjectDetector:
 
     def __init__(self):
-        # RGB
+        # BRG
         self.color_ranges = {
             "black": [(np.array([0,0,0]), np.array([settings.RGB_MAX_VALUE] * 3))]
         }
