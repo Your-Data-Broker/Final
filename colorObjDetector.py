@@ -11,16 +11,16 @@ class ColorObjectDetector:
             "black": [(np.array([0,0,0]), np.array([settings.RGB_MAX_VALUE] * 3))]
         }
 
-    def process_frame(self, frame, target_colors):
+    def process_frame(self, frame, target_colors, line_amount):
         img = frame
 
-        for i in range(settings.LINE_AMOUNT):
+        for i in range(line_amount):
             if i != 0:
                 cv2.line(img, (0, settings.RES[1]//settings.LINE_AMOUNT * i), (settings.RES[0], settings.RES[1]//settings.LINE_AMOUNT * i), settings.WHITE, settings.LINE_THICKNESS)
 
         outputImg = img.copy()
 
-        img = cv2.GaussianBlur(frame, (5, 5), 0)
+        img = cv2.GaussianBlur(frame, (settings.BLUR_STRENGTH, settings.BLUR_STRENGTH), 0)
 
         centers = []
 
@@ -47,8 +47,6 @@ class ColorObjectDetector:
                     continue
 
                 colorCount += 1
-
-
 
                 M = cv2.moments(contour)
                 if M["m00"] != 0:
