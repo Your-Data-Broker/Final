@@ -1,27 +1,27 @@
-# The script is not used and can be removed
-
 import cv2
 import numpy as np
+import settings
 
 
 class ColorObjectDetector:
 
     def __init__(self):
-        # HSV
+        # BRG
         self.color_ranges = {
-            "black": [(np.array([0, 0, 0]), np.array([179, 255, 50]))]
-        }
-
-        self.color_ranges_rgb = {
-            "black": [(np.array([0,0,0]), np.array([70, 70, 70]))]
+            "black": [(np.array([0,0,0]), np.array([settings.RGB_MAX_VALUE] * 3))]
         }
 
     def process_frame(self, frame, target_colors):
+        img = frame
+
+        for i in range(settings.LINE_AMOUNT):
+            cv2.line(img, (0, settings.RES[1]//settings.LINE_AMOUNT * i), (settings.RES[0], settings.RES[1]//settings.LINE_AMOUNT * i), settings.WHITE, settings.LINE_THICKNESS)
+
+        outputImg = img.copy()
+
         img = cv2.GaussianBlur(frame, (5, 5), 0)
 
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-        outputImg = frame.copy()
+        centers = []
 
         for colorName in target_colors:
             if colorName not in self.color_ranges:
@@ -30,30 +30,35 @@ class ColorObjectDetector:
             mask = None
             for lower, upper in self.color_ranges[colorName]:
                 if mask is None:
-                    mask = cv2.inRange(hsv, lower, upper)
+                    mask = cv2.inRange(img, lower, upper)
                 else:
-                    mask = cv2.bitwise_or(mask, cv2.inRange(hsv, lower, upper))
+                    mask = cv2.bitwise_or(mask, cv2.inRange(img, lower, upper))
 
             contours, _ = cv2.findContours(
                 mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
             )
 
             colorCount = 0
-            for contour in contours:
-                if cv2.contourArea(contour) < 500:
+            for i in range(len(contours)):
+                contour = contours[i]
+                if cv2.contourArea(contour) < settings.MIN_MASK_AREA:
                     continue
 
                 colorCount += 1
+
+
 
                 M = cv2.moments(contour)
                 if M["m00"] != 0:
                     cx = int(M["m10"] / M["m00"])
                     cy = int(M["m01"] / M["m00"])
 
-                    cv2.drawContours(outputImg, [contour], -1, (0, 255, 0), 2)
+                    centers.append([cx, cy])
+
+                    cv2.drawContours(outputImg, [contour], -1, (0, 255, 0), settings.LINE_THICKNESS)
                     cv2.circle(outputImg, (cx, cy), 5, (146, 255, 176), -1)
 
-        return outputImg
+        return outputImg, centers
 
 
 
@@ -78,8 +83,7 @@ if __name__ == "__main__":
             print("Failed to grab frame.")
             break
 
-        # Send the live frame into your logic
-        processed_frame = detector.process_frame(
+        processed_frame, centers = detector.process_frame(
             frame, target_colors=selected_colors
         )
 

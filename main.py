@@ -1,13 +1,13 @@
 import cv2
 import time
 from websocket import create_connection
-from colorObjDetector2 import ColorObjectDetector
+from colorObjDetector import ColorObjectDetector
 import threading
 import settings
 
 
 detector = ColorObjectDetector()
-robot = create_connection(f"ws://{settings.ROBOT_IP}/ws", timeout=2)
+robot = create_connection(f"ws://{settings.ROBOT_IP}/ws", timeout=10)
 video = cv2.VideoCapture(f"http://{settings.ROBOT_IP}:81/stream")
 
 #320x240
@@ -20,7 +20,15 @@ post(f"speed:{settings.LINEAR_SPEED}")
 
 lastCommandTime = time.time_ns()
 
+def endingProsedure():
+    robot.send("stop")
+
+    video.release()
+    robot.close()
+    cv2.destroyAllWindows()
+
 def stopThreadFunc():
+    global lastCommandTime
     savedTime = time.time_ns()
     lastCommandTime = savedTime
     time.sleep(settings.KILL_TIME)
@@ -28,10 +36,11 @@ def stopThreadFunc():
         post("stop")
         exit()
 
-def startThread():
+def startKillswitch():
     stopThread = threading.Thread(target=stopThreadFunc)
     stopThread.start()
     stopThread.join()
+    endingProsedure()
 
 
 while True:
@@ -63,19 +72,17 @@ while True:
                 if center[0] > settings.RES[0]//2:
                     post(f"speed:{settings.TURNING_SPEED}")
                     post("right")
+                    startKillswitch()
                 else:
                     post(f"speed:{settings.TURNING_SPEED}")
                     post("left")
+                    startKillswitch()
             else:
                 post(f"speed:{settings.LINEAR_SPEED}")
                 post("forward")
+                startKillswitch()
 
     if cv2.waitKey(1) == 27:
         break
 
-robot.send("stop")
-print(robot.recv())
-
-video.release()
-robot.close()
-cv2.destroyAllWindows()
+endingProsedure()
