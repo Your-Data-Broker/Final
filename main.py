@@ -50,7 +50,6 @@ while True:
         processedFrame, centers = detector.process_frame(frame, target_colors=["black"])
 
         cv2.line(processedFrame, (settings.RES[0]//2, 0), (settings.RES[0]//2, settings.RES[1]), settings.RED, settings.LINE_THICKNESS)
-        cv2.imshow("Robot camera", processedFrame)
 
         center = [settings.RES[0]//2,settings.RES[1]//2]
 
@@ -81,6 +80,10 @@ while True:
                 post(f"speed:{settings.LINEAR_SPEED}")
                 post("forward")
                 startKillswitch()
+
+        cv2.line(processedFrame, (settings.RES[0]//2, 0), center, settings.RED, settings.LINE_THICKNESS)
+
+        cv2.imshow("Robot camera", processedFrame)
 
     if cv2.waitKey(1) == 27:
         break
