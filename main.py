@@ -12,8 +12,11 @@ video = cv2.VideoCapture(f"http://{settings.ROBOT_IP}:81/stream")
 
 #320x240
 
+currentSpeed = 0
+lastCommand = ""
 
 def post(post_str):
+    lastCommand = post_str
     robot.send(post_str)
 
 post(f"speed:{settings.LINEAR_SPEED}")
@@ -62,18 +65,34 @@ while True:
                     center = c
 
             if center == None:
-                post(f"speed{settings.BACKWARD_SPEED}")
+                if currentSpeed != settings.BACKWARD_SPEED:
+                    post(f"speed{settings.BACKWARD_SPEED}")
+                    currentSpeed = settings.BACKWARD_SPEED
+
+                if lastCommand != "backward":
+                    post("stop")
+
                 post("backward")
                 print("going backward")
+
             elif abs(center[0] - settings.RES[0]//2) > settings.REACT_DIFF:
                 if center[0] > settings.RES[0]//2:
-                    post(f"speed:{settings.TURNING_SPEED}")
+                    if currentSpeed != settings.TURNING_SPEED:
+                        post(f"speed:{settings.TURNING_SPEED}")
+                        currentSpeed = settings.TURNING_SPEED
+
                     post("right")
                 else:
-                    post(f"speed:{settings.TURNING_SPEED}")
+                    if currentSpeed != settings.TURNING_SPEED:
+                        post(f"speed:{settings.TURNING_SPEED}")
+                        currentSpeed = settings.TURNING_SPEED
+
                     post("left")
             else:
-                post(f"speed:{settings.LINEAR_SPEED}")
+                if currentSpeed != settings.LINEAR_SPEED:
+                    post(f"speed:{settings.LINEAR_SPEED}")
+                    currentSpeed = settings.LINEAR_SPEED
+
                 post("forward")
 
         cv2.line(processedFrame, (settings.RES[0]//2, 0), center, settings.RED, settings.LINE_THICKNESS)
