@@ -15,7 +15,8 @@ class ColorObjectDetector:
         img = frame
 
         for i in range(settings.LINE_AMOUNT):
-            cv2.line(img, (0, settings.RES[1]//settings.LINE_AMOUNT * i), (settings.RES[0], settings.RES[1]//settings.LINE_AMOUNT * i), settings.WHITE, settings.LINE_THICKNESS)
+            if i != 0:
+                cv2.line(img, (0, settings.RES[1]//settings.LINE_AMOUNT * i), (settings.RES[0], settings.RES[1]//settings.LINE_AMOUNT * i), settings.WHITE, settings.LINE_THICKNESS)
 
         outputImg = img.copy()
 
@@ -41,7 +42,8 @@ class ColorObjectDetector:
             colorCount = 0
             for i in range(len(contours)):
                 contour = contours[i]
-                if cv2.contourArea(contour) < settings.MIN_MASK_AREA:
+                area = cv2.contourArea(contour)
+                if area < settings.MIN_MASK_AREA and area > settings.MAX_MASK_AREA:
                     continue
 
                 colorCount += 1
