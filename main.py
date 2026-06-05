@@ -40,7 +40,7 @@ while True:
     if ok:
         processedFrame, centers = detector.process_frame(frame, target_colors=["black"])
 
-        cv2.line(processedFrame, (settings.RES[0]//2, 0), (settings.RES[0]//2, settings.RES[1]), settings.RED, LINE_THICKNESS)
+        cv2.line(processedFrame, (settings.RES[0]//2, 0), (settings.RES[0]//2, settings.RES[1]), settings.RED, settings.LINE_THICKNESS)
         cv2.imshow("Robot camera", processedFrame)
 
         center = [settings.RES[0]//2,settings.RES[1]//2]
@@ -56,7 +56,7 @@ while True:
                 #if abs(c[0] - settings.RES[0]//2) < abs(center[0] - settings.RES[0]//2):
                 #    center = c
 
-                if c[1] < center[1]:
+                if c[1] > center[1]:
                     center = c
 
             if abs(center[0] - settings.RES[0]//2) > settings.REACT_DIFF:
