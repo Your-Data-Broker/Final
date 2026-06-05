@@ -2,7 +2,6 @@ import cv2
 import time
 from websocket import create_connection
 from colorObjDetector import ColorObjectDetector
-import threading
 import settings
 
 
@@ -21,26 +20,11 @@ post(f"speed:{settings.LINEAR_SPEED}")
 lastCommandTime = time.time_ns()
 
 def endingProsedure():
-    robot.send("stop")
+    post("stop")
 
     video.release()
     robot.close()
     cv2.destroyAllWindows()
-
-def stopThreadFunc():
-    global lastCommandTime
-    savedTime = time.time_ns()
-    lastCommandTime = savedTime
-    time.sleep(settings.KILL_TIME)
-    if lastCommandTime == savedTime:
-        post("stop")
-        exit()
-
-def startKillswitch():
-    stopThread = threading.Thread(target=stopThreadFunc)
-    stopThread.start()
-    stopThread.join()
-    endingProsedure()
 
 
 while True:
@@ -71,15 +55,12 @@ while True:
                 if center[0] > settings.RES[0]//2:
                     post(f"speed:{settings.TURNING_SPEED}")
                     post("right")
-                    startKillswitch()
                 else:
                     post(f"speed:{settings.TURNING_SPEED}")
                     post("left")
-                    startKillswitch()
             else:
                 post(f"speed:{settings.LINEAR_SPEED}")
                 post("forward")
-                startKillswitch()
 
         cv2.line(processedFrame, (settings.RES[0]//2, 0), center, settings.RED, settings.LINE_THICKNESS)
 
