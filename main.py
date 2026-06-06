@@ -35,7 +35,7 @@ while True:
     ok, frame = video.read()
 
     if ok:
-        processedFrame, centers = detector.process_frame(frame, target_colors=["black"], settings.LINE_AMOUNT)
+        processedFrame, centers = detector.process_frame(frame, target_colors=["black"], line_amount=settings.LINE_AMOUNT)
 
         cv2.line(processedFrame, (settings.RES[0]//2, 0), (settings.RES[0]//2, settings.RES[1]), settings.RED, settings.LINE_THICKNESS)
 

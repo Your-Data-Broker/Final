@@ -43,7 +43,7 @@ class ColorObjectDetector:
             for i in range(len(contours)):
                 contour = contours[i]
                 area = cv2.contourArea(contour)
-                if area < settings.MIN_MASK_AREA and area > settings.MAX_MASK_AREA:
+                if area < settings.MIN_MASK_AREA or area > settings.MAX_MASK_AREA:
                     continue
 
                 colorCount += 1
@@ -84,7 +84,7 @@ if __name__ == "__main__":
             break
 
         processed_frame, centers = detector.process_frame(
-            frame, target_colors=selected_colors
+            frame, target_colors=selected_colors, line_amount=settings.LINE_AMOUNT
         )
 
         cv2.imshow("Detected Objects", processed_frame)
