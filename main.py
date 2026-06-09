@@ -14,8 +14,10 @@ video = cv2.VideoCapture(f"http://{settings.ROBOT_IP}:81/stream")
 
 currentSpeed = 0
 lastCommand = ""
+frameCounter = 0
 
 def post(post_str):
+    global lastCommand
     lastCommand = post_str
     robot.send(post_str)
 
@@ -43,12 +45,12 @@ while True:
 
         valid_centers = [c for c in centers if c is not None]
 
+        center = None
+
         if valid_centers:
             for i in range(len(valid_centers)):
-                if not valid_centers[i][0] > (settings.RES[0]//2 - settings.SIDE_LIMIT) or not valid_centers[i][0] < (settings.RES[0]//2 + settings.SIDE_LIMIT) or valid_centers[i][1] > settings.MAX_CENTER_Y_COORD:
+                if not valid_centers[i][0] > (settings.RES[0]//2 - settings.SIDE_LIMIT) or not valid_centers[i][0] < (settings.RES[0]//2 + settings.SIDE_LIMIT) or valid_centers[i][1] > settings.MAX_CENTER_Y_COORD or valid_centers[i][1] < settings.MIN_CENTER_Y_COORD:
                     valid_centers[i] = None
-
-            center = None
 
             for c in valid_centers:
                 if c != None:
@@ -64,36 +66,41 @@ while True:
                 if c != None and c[1] > center[1]:
                     center = c
 
-            if center == None:
+            if center != None:
+                frameCounter = 0
+
+                if abs(center[0] - settings.RES[0]//2) > settings.REACT_DIFF:
+                    if center[0] > settings.RES[0]//2:
+                        if currentSpeed != settings.TURNING_SPEED:
+                            post(f"speed:{settings.TURNING_SPEED}")
+                            currentSpeed = settings.TURNING_SPEED
+
+                        post("right")
+                    else:
+                        if currentSpeed != settings.TURNING_SPEED:
+                            post(f"speed:{settings.TURNING_SPEED}")
+                            currentSpeed = settings.TURNING_SPEED
+
+                        post("left")
+                else:
+                    if currentSpeed != settings.LINEAR_SPEED:
+                        post(f"speed:{settings.LINEAR_SPEED}")
+                        currentSpeed = settings.LINEAR_SPEED
+
+                    post("forward") 
+
+        if center == None:
+            frameCounter += 1
+            if frameCounter > settings.FRAMES_TO_GO_BACKWARD:
                 if currentSpeed != settings.BACKWARD_SPEED:
                     post(f"speed{settings.BACKWARD_SPEED}")
                     currentSpeed = settings.BACKWARD_SPEED
 
-                if lastCommand != "backward":
+                if lastCommand != "backward" and lastCommand != "stop":
                     post("stop")
 
                 post("backward")
                 print("going backward")
-
-            elif abs(center[0] - settings.RES[0]//2) > settings.REACT_DIFF:
-                if center[0] > settings.RES[0]//2:
-                    if currentSpeed != settings.TURNING_SPEED:
-                        post(f"speed:{settings.TURNING_SPEED}")
-                        currentSpeed = settings.TURNING_SPEED
-
-                    post("right")
-                else:
-                    if currentSpeed != settings.TURNING_SPEED:
-                        post(f"speed:{settings.TURNING_SPEED}")
-                        currentSpeed = settings.TURNING_SPEED
-
-                    post("left")
-            else:
-                if currentSpeed != settings.LINEAR_SPEED:
-                    post(f"speed:{settings.LINEAR_SPEED}")
-                    currentSpeed = settings.LINEAR_SPEED
-
-                post("forward")
 
         cv2.line(processedFrame, (settings.RES[0]//2, 0), center, settings.RED, settings.LINE_THICKNESS)
         cv2.line(processedFrame, (settings.RES[0]//2 - settings.SIDE_LIMIT, 0), (settings.RES[0]//2 - settings.SIDE_LIMIT, settings.RES[1]), settings.RED, settings.LINE_THICKNESS)
