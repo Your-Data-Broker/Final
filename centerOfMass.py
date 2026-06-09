@@ -9,9 +9,12 @@ detector = ColorObjectDetector()
 robot = create_connection(f"ws://{settings.ROBOT_IP}/ws", timeout=10)
 video = cv2.VideoCapture(f"http://{settings.ROBOT_IP}:81/stream")
 
+linearSpeed = settings.LINEAR_SPEED
 currentSpeed = 0
 lastCommand = ""
 frameCounter = 0
+lastBackwardTime = None
+accountedForLastBackwardTime = True
 
 def post(post_str):
     global lastCommand
@@ -19,8 +22,6 @@ def post(post_str):
     robot.send(post_str)
 
 post(f"speed:{settings.LINEAR_SPEED}")
-
-lastCommandTime = time.time_ns()
 
 def endingProsedure():
     post("stop")
@@ -61,11 +62,19 @@ while True:
 
                     post("left")
             else:
-                if currentSpeed != settings.LINEAR_SPEED:
-                    post(f"speed:{settings.LINEAR_SPEED}")
-                    currentSpeed = settings.LINEAR_SPEED
+                if accountedForLastBackwardTime == False:
+                    if time.time() - lastBackwardTime < 1:
+                        linearSpeed -= settings.SPEED_CHANGE
+                    accountedForLastBackwardTime = True
 
-                post("forward") 
+                if lastBackwardTime != None and time.time() - lastBackwardTime > 1 and linearSpeed < settings.LINEAR_SPEED:
+                    linearSpeed += settings.SPEED_CHANGE
+
+                if currentSpeed != linearSpeed:
+                    post(f"speed:{linearSpeed}")
+                    currentSpeed = linearSpeed
+
+                post("forward")
         else:
             frameCounter += 1
 
@@ -78,6 +87,9 @@ while True:
                     currentSpeed = settings.BACKWARD_SPEED
 
                 post("backward")
+
+                lastBackwardTime = time.time()
+                accountedForLastBackwardTime = False
                 print("going backward")
 
         cv2.imshow("Robot camera", processedFrame)
