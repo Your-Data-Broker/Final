@@ -5,7 +5,6 @@ from colorObjDetector import ColorObjectDetector
 import settings
 
 
-
 detector = ColorObjectDetector()
 robot = create_connection(f"ws://{settings.ROBOT_IP}/ws", timeout=10)
 video = cv2.VideoCapture(f"http://{settings.ROBOT_IP}:81/stream")
@@ -91,13 +90,14 @@ while True:
 
         if center == None:
             frameCounter += 1
+
+            if lastCommand != "backward" and lastCommand != "stop":
+                post("stop")
+
             if frameCounter > settings.FRAMES_TO_GO_BACKWARD:
                 if currentSpeed != settings.BACKWARD_SPEED:
                     post(f"speed{settings.BACKWARD_SPEED}")
                     currentSpeed = settings.BACKWARD_SPEED
-
-                if lastCommand != "backward" and lastCommand != "stop":
-                    post("stop")
 
                 post("backward")
                 print("going backward")
