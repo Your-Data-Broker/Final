@@ -23,68 +23,61 @@ import numpy as np
 import time
 from websocket import create_connection
 
-class ColorObjectDetector:
+color_ranges = {"black": [(np.array([0,0,0]), np.array([RGB_MAX_VALUE] * 3))]}
 
-    def __init__(self):
-        # BRG
-        self.color_ranges = {
-            "black": [(np.array([0,0,0]), np.array([RGB_MAX_VALUE] * 3))]
-        }
+def process_frame(frame, target_colors, line_amount):
+    img = frame
 
-    def process_frame(self, frame, target_colors, line_amount):
-        img = frame
+    for i in range(line_amount):
+        if i != 0:
+            cv2.line(img, (0, RES[1]//LINE_AMOUNT * i), (RES[0], RES[1]//LINE_AMOUNT * i), WHITE, LINE_THICKNESS)
 
-        for i in range(line_amount):
-            if i != 0:
-                cv2.line(img, (0, RES[1]//LINE_AMOUNT * i), (RES[0], RES[1]//LINE_AMOUNT * i), WHITE, LINE_THICKNESS)
+    outputImg = img.copy()
 
-        outputImg = img.copy()
+    img = cv2.GaussianBlur(frame, (BLUR_STRENGTH, BLUR_STRENGTH), 0)
 
-        img = cv2.GaussianBlur(frame, (BLUR_STRENGTH, BLUR_STRENGTH), 0)
+    centers = []
 
-        centers = []
+    for colorName in target_colors:
+        if colorName not in color_ranges:
+            continue
 
-        for colorName in target_colors:
-            if colorName not in self.color_ranges:
+        mask = None
+        for lower, upper in color_ranges[colorName]:
+            if mask is None:
+                mask = cv2.inRange(img, lower, upper)
+            else:
+                mask = cv2.bitwise_or(mask, cv2.inRange(img, lower, upper))
+
+        contours, _ = cv2.findContours(
+            mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
+
+        colorCount = 0
+        for i in range(len(contours)):
+            contour = contours[i]
+            area = cv2.contourArea(contour)
+            if area < MIN_MASK_AREA or area > MAX_MASK_AREA:
                 continue
 
-            mask = None
-            for lower, upper in self.color_ranges[colorName]:
-                if mask is None:
-                    mask = cv2.inRange(img, lower, upper)
-                else:
-                    mask = cv2.bitwise_or(mask, cv2.inRange(img, lower, upper))
+            colorCount += 1
 
-            contours, _ = cv2.findContours(
-                mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-            )
+            M = cv2.moments(contour)
+            if M["m00"] != 0:
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
 
-            colorCount = 0
-            for i in range(len(contours)):
-                contour = contours[i]
-                area = cv2.contourArea(contour)
-                if area < MIN_MASK_AREA or area > MAX_MASK_AREA:
-                    continue
+                centers.append([cx, cy])
 
-                colorCount += 1
+                cv2.drawContours(outputImg, [contour], -1, (0, 255, 0), LINE_THICKNESS)
+                cv2.circle(outputImg, (cx, cy), 5, (146, 255, 176), -1)
 
-                M = cv2.moments(contour)
-                if M["m00"] != 0:
-                    cx = int(M["m10"] / M["m00"])
-                    cy = int(M["m01"] / M["m00"])
-
-                    centers.append([cx, cy])
-
-                    cv2.drawContours(outputImg, [contour], -1, (0, 255, 0), LINE_THICKNESS)
-                    cv2.circle(outputImg, (cx, cy), 5, (146, 255, 176), -1)
-
-        return outputImg, centers
+    return outputImg, centers
 
 
 
-detector = ColorObjectDetector()
-robot = create_connection(f"ws://{settings.ROBOT_IP}/ws", timeout=10)
-video = cv2.VideoCapture(f"http://{settings.ROBOT_IP}:81/stream")
+robot = create_connection(f"ws://{ROBOT_IP}/ws", timeout=10)
+video = cv2.VideoCapture(f"http://{ROBOT_IP}:81/stream")
 
 #320x240
 
@@ -97,7 +90,7 @@ def post(post_str):
     lastCommand = post_str
     robot.send(post_str)
 
-post(f"speed:{settings.LINEAR_SPEED}")
+post(f"speed:{LINEAR_SPEED}")
 
 lastCommandTime = time.time_ns()
 
@@ -113,7 +106,7 @@ while True:
     ok, frame = video.read()
 
     if ok:
-        processedFrame, centers = detector.process_frame(frame, target_colors=["black"], line_amount=LINE_AMOUNT)
+        processedFrame, centers = process_frame(frame, target_colors=["black"], line_amount=LINE_AMOUNT)
 
         cv2.line(processedFrame, (RES[0]//2, 0), (RES[0]//2, RES[1]), RED, LINE_THICKNESS)
 
