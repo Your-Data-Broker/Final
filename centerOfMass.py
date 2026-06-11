@@ -30,7 +30,7 @@ def endingProsedure():
     robot.close()
     cv2.destroyAllWindows()
 
-
+input()
 
 while True:
     ok, frame = video.read()
