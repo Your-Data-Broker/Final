@@ -7,7 +7,7 @@ import time
 
 detector = ColorObjectDetector()
 robot = create_connection(f"ws://{settings.ROBOT_IP}/ws", timeout=10)
-video = cv2.VideoCapture(f"http://{settings.ROBOT_IP}:81/stream")
+video = cv2.VideoCapture(f"http://{settings.ROBOT_IP}:81/stream", cv2.CAP_FFMPEG)
 
 linearSpeed = settings.LINEAR_SPEED
 currentSpeed = 0
@@ -42,8 +42,9 @@ while True:
         amount = 0
 
         for c in centers:
-            amount += 1
-            centerOfMassX += c[0]
+            if abs(c[0] - settings.RES[0]//2) < settings.SIDE_X_LIMIT and abs(c[1] - settings.RES[1]//2) < settings.SIDE_Y_LIMIT:
+                amount += 1
+                centerOfMassX += c[0]
 
         if amount > 0:
             centerOfMassX /= amount
@@ -78,10 +79,9 @@ while True:
         else:
             frameCounter += 1
 
-            if lastCommand != "backward" and lastCommand != "stop":
-                post("stop")
-
             if frameCounter > settings.FRAMES_TO_GO_BACKWARD:
+                if lastCommand != "backward" and lastCommand != "stop":
+                    post("stop")
                 if currentSpeed != settings.BACKWARD_SPEED:
                     post(f"speed{settings.BACKWARD_SPEED}")
                     currentSpeed = settings.BACKWARD_SPEED
