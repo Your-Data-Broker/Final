@@ -15,11 +15,13 @@ lastCommand = ""
 frameCounter = 0
 lastBackwardTime = None
 accountedForLastBackwardTime = True
+startTime = time.time()
 
 def post(post_str):
     global lastCommand
     lastCommand = post_str
     robot.send(post_str)
+    print(post_str)
 
 post(f"speed:{settings.LINEAR_SPEED}")
 
@@ -30,23 +32,26 @@ def endingProsedure():
     robot.close()
     cv2.destroyAllWindows()
 
+k, f = video.read()
+
 input()
 
 while True:
     ok, frame = video.read()
 
-    if ok:
+    if ok and time.time() - startTime > 1:
         processedFrame, centers = detector.process_frame(frame, target_colors=["black"], line_amount=settings.LINE_AMOUNT)
 
         centerOfMassX = 0
         amount = 0
 
         for c in centers:
-            if abs(c[0] - settings.RES[0]//2) < settings.SIDE_X_LIMIT and abs(c[1] - settings.RES[1]//2) < settings.SIDE_Y_LIMIT:
+            if c[1] < settings.MAX_Y_COORD:
                 amount += 1
                 centerOfMassX += c[0]
 
         if amount > 0:
+            frameCounter = 0
             centerOfMassX /= amount
 
             if abs(centerOfMassX - settings.RES[0]//2) > settings.COM_REACT_DIFF:
@@ -80,6 +85,8 @@ while True:
             frameCounter += 1
 
             if frameCounter > settings.FRAMES_TO_GO_BACKWARD:
+                frameCounter = 0
+
                 if lastCommand != "backward" and lastCommand != "stop":
                     post("stop")
                 if currentSpeed != settings.BACKWARD_SPEED:
