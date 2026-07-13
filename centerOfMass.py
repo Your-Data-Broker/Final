@@ -15,13 +15,16 @@ lastCommand = ""
 frameCounter = 0
 lastBackwardTime = None
 accountedForLastBackwardTime = True
-startTime = time.time()
+lastFrameTime = time.time()
 
 def post(post_str):
-    global lastCommand
-    lastCommand = post_str
-    robot.send(post_str)
-    print(post_str)
+    if time.time() - lastFrameTime < .1:
+        global lastCommand
+        lastCommand = post_str
+        robot.send(post_str)
+        print(post_str)
+    else:
+        robot.send("stop")
 
 post(f"speed:{settings.LINEAR_SPEED}")
 
@@ -39,7 +42,9 @@ input()
 while True:
     ok, frame = video.read()
 
-    if ok and time.time() - startTime > 1:
+    lastFrameTime = time.time()
+
+    if ok:
         processedFrame, centers = detector.process_frame(frame, target_colors=["black"], line_amount=settings.LINE_AMOUNT)
 
         centerOfMassX = 0
